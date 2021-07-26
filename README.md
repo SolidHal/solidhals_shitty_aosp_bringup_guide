@@ -172,6 +172,10 @@ some tips:
 ## build and test your image, a lot
 your first build won't boot
 make sure you are running selinux permissive in the kernel cmdline for now
+
+make sure you check out the section on adb logcat below with some tips to get it working.
+
+if you can't get adb working and need logs:
 since you have a functional recovery, you have some debugging options
 1) last_kmsg
 2) /sys/fs/pstore/
@@ -180,10 +184,13 @@ make sure the init scripts aren't erroring out
 next make sure keymaster and gatekeeper aren't causing issues
 
 some tips for looking at these logs:
-1) `exited with status 1` is a bad thing, figure out what service is failing and why. Do you have the correct prebuilt files? Are your .mk files configured properly?
+- `exited with status 1` is a bad thing, figure out what service is failing and why. Do you have the correct prebuilt files? Are your .mk files configured properly?
   it is also possible that you have some service lying around from your reference device, and your device does not support it
-2) like before, `Booting Linux` is your sign of a new boot
-3) the log buffers can be small meaning if you get stuck in boot for a long time the actual failure may get dropped from the buffer
+- `init: Control message: Could not find`
+- `init: Could not start service`
+- `times before boot completed`
+- like before, `Booting Linux` is your sign of a new boot
+- the log buffers can be small in size, meaning if you get stuck in boot for a long time the actual failure may get dropped from the buffer
   to work around this, you can force the device off after ~20 to 30 seconds to comb through the start of boot
 
 
@@ -193,6 +200,65 @@ if you get this far, congratulations, most of the hardest work is over. You now 
 now debug:
 - hardware functionality
 - selinux functionality, make sure you remove selinux permissive
+
+see below for some tips on this...
+
+## adb logcat
+
+this is one of the most important hurdles to overcome, as once you have the adb daemon (adbd) running you
+can start eaily getting all of the logs instead of just the `last_kmsg` fragment
+
+even if your device doesn't boot, you can run
+```
+adb wait-for-device logcat
+```
+which will dump all of your logs as soon as a device is available
+
+### Things to try if adb doesn't work
+
+Look for `start adbd` in your devices `.rc` files. There will likely be multiple.
+Make sure your devices definition of `sys.usb.config` in the `.prop` files matches one of them.
+### IMPORTANT the strings after the `=` must match exactly in the `.prop` and the `.rc`
+ex: 
+in the `.prop` files
+```
+sys.usb.config=mtp,conn_gadget,adb
+```
+and in the `.rc`
+```
+on property:sys.usb.config=mtp,conn_gadget,adb
+```
+As a general tip for android init scripts, you can use the following to print something in `last_kmsg`
+```
+    write /dev/kmsg "SOLIDHAL starting adbd"
+```
+
+## Compare your build to stock
+
+the easiest way to compare a build vendor, odm, system, etc. partition to a stock one is to use git
+for these instructions, I will use the vendor partition as an example
+
+*NOTE* some files may end up in a different partition in the built image than in the stock image, this is usually alright for things like libraries
+
+1) copy the stock vendor files to a directory we will call `stock`
+2) copy the built vendor files to a directory we will all `built`
+   - on lineage, these are available at `out/target/product/<dev_name>/vendor`
+3) run `git init` in `stock`
+4) copy `stock/.git` to `built/.git`
+5) `git status`
+6) `git ls-files -d` is useful for seeing just deleted files, but looking at the modified files is good to do as well
+
+
+#### simpler, but with drawbacks
+
+this can only really be used to compare small directories with a few differences, otherwise `diff` gets un-helpful
+
+get a one item per line list of everything in a directory
+the `|` tells ls to change its output to one item per line
+```
+ls -a | cat > file_list.txt
+```
+run that in your stock and built directory and diff the two lists
 
 ## share your work
 Congratulations, you successfully brought up an AOSP rom for your device. This is no small feat.
