@@ -18,7 +18,8 @@ This is not a step by step guide, I cannot predict what things will/won't work f
 
 ## Collect information on your device
 This is not all of the information you will need, but it will get you started
-Make sure to read this list thuroughly as not having some of these items means this is nearly impossible.
+
+Make sure to read this list thoroughly as not having some of these items means this is nearly impossible.
 
 - Can you unlock your devices bootloader?
    - without an unlocked bootloader, this is impossible. If you don't know if your bootloader is unlocked, it probably isn't.
@@ -42,7 +43,7 @@ Make sure to read this list thuroughly as not having some of these items means t
 
 ## getting help
 unfortunately, there is often no obvious "correct" answer to any issues you may face in this process
-best you can do is read the error logs, read the code that creates them. The section below about useful tools will help you with this
+best you can do is read the error logs and read the code that creates them. The section below about useful tools will help you with this
 even with the logs and the source code, it might take an experienced person quite a bit of time to figure out your specific issue. Don't be surprised when folks on irc or mailing lists are hesitant to offer up hours of their own time to debug your issue.
 If you hit a road block, start reading any documentation or blog posts about the part of the code base giving you issue.
 
@@ -183,7 +184,7 @@ parse these logs for failures. Start with mount failures, as those will cause lo
 make sure the init scripts aren't erroring out
 next make sure keymaster and gatekeeper aren't causing issues
 
-some tips for looking at these logs:
+## messages to look for in kmsg
 - `exited with status 1` is a bad thing, figure out what service is failing and why. Do you have the correct prebuilt files? Are your .mk files configured properly?
   it is also possible that you have some service lying around from your reference device, and your device does not support it
 - `init: Control message: Could not find`
@@ -193,15 +194,6 @@ some tips for looking at these logs:
 - the log buffers can be small in size, meaning if you get stuck in boot for a long time the actual failure may get dropped from the buffer
   to work around this, you can force the device off after ~20 to 30 seconds to comb through the start of boot
 
-
-## Get your build booting
-if you get this far, congratulations, most of the hardest work is over. You now have access to a bunch of android debugging tools like `logcat` that will make the next steps easier.
-
-now debug:
-- hardware functionality
-- selinux functionality, make sure you remove selinux permissive
-
-see below for some tips on this...
 
 ## adb logcat
 
@@ -233,7 +225,21 @@ As a general tip for android init scripts, you can use the following to print so
     write /dev/kmsg "SOLIDHAL starting adbd"
 ```
 
-## Compare your build to stock
+## messages to look for in adb logcat
+
+all of the messages to look for in kmsg plus:
+
+- any line mentioning `linker`
+- `Cannot find entry`
+- `java.lang.RuntimeException`
+- `Failure starting core service`
+- `Failure starting system services`
+- `dlopen failed: cannot locate symbol`
+
+see below for some tips on debugging some of these
+
+
+## compare your build to stock
 
 the easiest way to compare a build vendor, odm, system, etc. partition to a stock one is to use git
 for these instructions, I will use the vendor partition as an example
@@ -259,6 +265,26 @@ the `|` tells ls to change its output to one item per line
 ls -a | cat > file_list.txt
 ```
 run that in your stock and built directory and diff the two lists
+
+## Linker cannot locate symbol
+
+```
+01-01 00:00:46.220  1088  1088 F linker  : CANNOT LINK EXECUTABLE "/vendor/bin/hw/rild": cannot locate symbol "rilc_configure_thread_pool" referenced by "/vendor/bin/hw/rild"...
+```
+
+to find which library contains the missing symbol, run the following on your stock file system dump:
+```
+find . -name "*.so" -exec /bin/bash -c  "nm -D {} | rg "rilc_configure_thread_pool" && echo {}" \;
+```
+
+## Get your build booting
+if you get this far, congratulations, most of the hardest work is over. You now have access to a bunch of android debugging tools like `logcat` that will make the next steps easier.
+
+now debug:
+- hardware functionality
+- selinux functionality, make sure you remove selinux permissive
+
+use the above tips to do this
 
 ## share your work
 Congratulations, you successfully brought up an AOSP rom for your device. This is no small feat.
