@@ -7,7 +7,7 @@
 # NOTICE: if you skip reading this, you *will* have a bad time
 
 Building AOSP for your device is *NOT* easy. Once it is built, getting everything booting, let alone getting a fully functional device is very very hard.
-You will need extensive knowledge of linux operating systems and kernels, and be ready to read a lot aboutthe special ways in which android works.
+You will need extensive knowledge of linux operating systems and kernels, and be ready to read a lot about the special ways in which android works.
 Even with this knowledge, you will likely fail. Be ready to sink months of work into this.
 If you do succeed, congratulations! Please share your sources and roms with folks around the xda fourms, lineage, or your other favorite rom. 
 
@@ -55,9 +55,9 @@ any error codes you get are somewhere in the giant AOSP code base, and these wil
 ## find a similar device to start from
 - using the cpu chipset is a good way to do this.
 ex: the sm8250 
-https://github.com/LineageOS/android_device_xiaomi_sm8250-common
-https://github.com/LineageOS/android_device_oneplus_sm8250-common
-https://github.com/LineageOS/android_device_asus_sm8250-common
+ - https://github.com/LineageOS/android_device_xiaomi_sm8250-common
+ - https://github.com/LineageOS/android_device_oneplus_sm8250-common
+ - https://github.com/LineageOS/android_device_asus_sm8250-common
 
 ## make the repos
 your device will at the minimum need its own:
